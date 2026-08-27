@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Assessment Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:        #1B1F3B;
+    --ink-soft:   #565b7d;
+    --paper:      #FAF7F0;
+    --paper-card: #FFFFFF;
+    --paper-line: #E7E1D2;
+    --chalkboard: #1F3D2E;
+    --chalkboard-2:#28503C;
+    --chalk:      #F2EFE4;
+    --highlighter:#FFD23F;
+    --highlighter-ink:#584600;
+    --red-pen:    #C0392B;
+    --ok-green:   #2F6F4F;
+    --shadow: 0 1px 2px rgba(27,31,59,.04), 0 8px 24px rgba(27,31,59,.06);
+    --radius: 14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter', system-ui, sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,.display{
+    font-family:'Space Grotesk', 'Inter', sans-serif;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'JetBrains Mono', ui-monospace, monospace; }
+  ::selection{ background: var(--highlighter); color: var(--ink); }
+  a{color:inherit;}
+  .ruled-bg{
+    background-image: repeating-linear-gradient(
+      to bottom, transparent 0 39px, var(--paper-line) 39px 40px
+    );
+  }
+  .app-header{
+    background: var(--chalkboard);
+    background-image: radial-gradient(1200px 200px at 10% -40%, var(--chalkboard-2), var(--chalkboard) 60%);
+    color: var(--chalk);
+    border-bottom: 4px solid var(--highlighter);
+  }
+  .brand-mark{
+    width:38px;height:38px;border-radius:10px;
+    background: var(--highlighter);
+    color: var(--highlighter-ink);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:18px;
+    transform: rotate(-4deg);
+    box-shadow: var(--shadow);
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color: #C9E4D4;
+  }
+  .btn-primary{
+    background: var(--highlighter);
+    color: var(--highlighter-ink);
+    font-weight:600;
+    border:none;
+    border-radius:10px;
+    padding:14px 28px;
+    position:relative;
+    box-shadow: 0 2px 0 0 #C9A400, var(--shadow);
+    transition: transform .12s ease, box-shadow .12s ease;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .btn-primary:hover:not(:disabled){ transform: translateY(-1px); }
+  .btn-primary:active:not(:disabled){ transform: translateY(1px); box-shadow: 0 0 0 0 #C9A400; }
+  .btn-primary:disabled{ opacity:.35; cursor:not-allowed; box-shadow:none; }
+  .hero-title{
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    line-height:1.08;
+  }
+  .hero-title .hl{
+    background: linear-gradient(180deg, transparent 62%, var(--highlighter) 62%);
+    padding: 0 2px;
+  }
+  .drop-zone{
+    background: var(--paper-card);
+    border: 2px dashed var(--paper-line);
+    border-radius: var(--radius);
+    transition: border-color .15s ease, background .15s ease, transform .1s ease;
+    box-shadow: var(--shadow);
+  }
+  .drop-zone:hover{ border-color:#C9BFA0; }
+  .drop-zone.drag{ border-color: var(--highlighter); background:#FFFBEC; transform: scale(1.01); }
+  .card-label{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-soft);
+  }
+  .paperclip{
+    position:absolute; top:-10px; left:22px; font-size:22px;
+    transform: rotate(-18deg);
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,.15));
+  }
+  .progress-track{ background: var(--paper-line); border-radius:99px; height:10px; overflow:hidden; }
+  .progress-fill{
+    background: linear-gradient(90deg, var(--ok-green), var(--highlighter));
+    height:100%; border-radius:99px;
+    transition: width .5s cubic-bezier(.4,0,.2,1);
+  }
+  .stage-row{ display:flex; align-items:center; gap:10px; padding:8px 0; }
+  .stage-icon{
+    width:22px; height:22px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; flex-shrink:0;
+    border:2px solid var(--paper-line); color:transparent;
+  }
+  .stage-row.done .stage-icon{ background:var(--ok-green); border-color:var(--ok-green); color:#fff; }
+  .stage-row.active .stage-icon{ border-color:var(--highlighter); background:var(--highlighter); color:var(--highlighter-ink); animation:pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,210,63,.5);} 50%{ box-shadow:0 0 0 6px rgba(255,210,63,0);} }
+  .stage-row.done span.label{ color:var(--ink); }
+  .stage-row.active span.label{ color:var(--ink); font-weight:600; }
+  .stage-row.pending span.label{ color:var(--ink-soft); }
+  .summary-pill{
+    border:1px solid var(--paper-line);
+    background:var(--paper-card);
+    border-radius:99px; padding:7px 14px; font-size:13px;
+    box-shadow: var(--shadow);
+  }
+  .panel{
+    background: var(--paper-card);
+    border:1px solid var(--paper-line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+  .panel-head{
+    background: var(--paper);
+    border-bottom:1px solid var(--paper-line);
+    padding:12px 16px;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:14px;
+  }
+  .q-item{
+    padding:12px 16px; cursor:pointer; display:flex; gap:10px; align-items:flex-start;
+    border-bottom:1px solid var(--paper-line);
+    transition: background .1s ease;
+  }
+  .q-item:hover{ background:#FBF3D9; }
+  .q-item.active{ background:#FFF6D6; box-shadow: inset 3px 0 0 0 var(--highlighter); }
+  .q-badge{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12px;font-weight:700;
+  }
+  .q-badge.answered{ background:#E4F1E9; color:var(--ok-green); }
+  .q-badge.review{ background:#FDEFE4; color:#B5651D; }
+  .q-badge.unanswered{ background:#EFECE0; color:#9A927A; }
+  .q-number{ font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px; }
+  .q-text{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .highlight-box{
+    position:absolute;
+    border-bottom: 3px solid var(--highlighter);
+    background: linear-gradient(rgba(255,210,63,.38), rgba(255,210,63,.38));
+    border-radius: 3px;
+    transform-origin: left center;
+    animation: highlighter-stroke .35s ease-out;
+  }
+  @keyframes highlighter-stroke{
+    from{ transform: scaleX(0); opacity:.2; }
+    to{ transform: scaleX(1); opacity:1; }
+  }
+  .page-tab{
+    font-family:'JetBrains Mono',monospace; font-size:11px;
+    padding:5px 10px; border-radius:7px; border:1px solid var(--paper-line);
+    background:var(--paper-card); cursor:pointer;
+  }
+  .page-tab:hover{ background:var(--paper); }
+  .screen-enter{ animation: fadeUp .35s ease both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  ::-webkit-scrollbar{ width:9px; height:9px; }
+  ::-webkit-scrollbar-thumb{ background:var(--paper-line); border-radius:99px; }
+</style>
+</head>
+<body class="ruled-bg">
+
+<header class="app-header">
+  <div style="max-width:1280px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:16px 24px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="brand-mark">A</div>
+      <div>
+        <div class="display" style="font-weight:700;font-size:17px;">AI Assessment Analyzer</div>
+        <div class="eyebrow">question → answer → highlight</div>
+      </div>
+    </div>
+    <div id="header-config" class="mono" style="font-size:11px;color:#B9CFC1;">API · <span id="api-base-label"></span></div>
+  </div>
+</header>
+
+<section id="screen-upload" class="screen-enter" style="max-width:820px;margin:0 auto;padding:72px 24px;">
+  <div class="eyebrow" style="margin-bottom:10px;">For teachers</div>
+  <h1 class="hero-title">Grade less. <span class="hl">Find faster.</span></h1>
+  <p style="color:var(--ink-soft);font-size:15px;margin:14px 0 36px;max-width:520px;">
+    Upload a question paper and a student's handwritten answer sheet.
+    Click any question — the exact answer, highlighted, appears instantly.
+  </p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+    <div>
+      <div class="card-label" style="margin-bottom:8px;">01 · Question paper</div>
+      <div id="drop-question" class="drop-zone" style="position:relative;padding:30px 20px;text-align:center;cursor:pointer;">
+        <span class="paperclip">📎</span>
+        <p id="label-question" style="font-size:13.5px;color:var(--ink-soft);margin:0;">Drop a PDF/image or <span style="color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--highlighter);text-decoration-thickness:3px;">choose file</span></p>
+        <input type="file" id="file-question" accept=".pdf,.png,.jpg,.jpeg" style="display:none;" />
+      </div>
+    </div>
+    <div>
+      <div class="card-label" style="margin-bottom:8px;">02 · Student answer sheet</div>
+      <div id="drop-answer" class="drop-zone" style="position:relative;padding:30px 20px;text-align:center;cursor:pointer;">
+        <span class="paperclip">📎</span>
+        <p id="label-answer" style="font-size:13.5px;color:var(--ink-soft);margin:0;">Drop a PDF/image or <span style="color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:var(--highlighter);text-decoration-thickness:3px;">choose file</span></p>
+        <input type="file" id="file-answer" accept=".pdf,.png,.jpg,.jpeg" style="display:none;" />
+      </div>
+    </div>
+  </div>
+
+  <button id="btn-analyze" disabled class="btn-primary" style="margin-top:32px;">
+    Analyze assessment →
+  </button>
+  <p id="upload-error" style="display:none;color:var(--red-pen);font-size:13.5px;margin-top:14px;"></p>
+</section>
+
+<section id="screen-processing" style="display:none;max-width:480px;margin:0 auto;padding:100px 24px;">
+  <h2 class="display" style="font-size:20px;font-weight:600;text-align:center;margin-bottom:8px;">Reading the papers…</h2>
+  <p style="text-align:center;color:var(--ink-soft);font-size:13px;margin-bottom:28px;">This usually takes under a minute.</p>
+  <div class="progress-track"><div id="progress-bar" class="progress-fill" style="width:0%"></div></div>
+  <div id="stage-list" style="margin-top:22px;"></div>
+  <p id="process-error" style="display:none;color:var(--red-pen);font-size:13.5px;margin-top:20px;"></p>
+</section>
+
+<section id="screen-result" style="display:none;">
+  <div style="max-width:1280px;margin:0 auto;padding:24px;">
+
+    <div id="summary-bar" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;"></div>
+
+    <div style="display:grid;grid-template-columns:330px 1fr;gap:18px;">
+      <div class="panel" style="height:fit-content;">
+        <div class="panel-head">Questions</div>
+        <div id="question-list" style="max-height:68vh;overflow-y:auto;"></div>
+
+        <div id="unmatched-wrap" style="display:none;border-top:1px solid var(--paper-line);">
+          <div class="panel-head" style="background:#FDEFE4;color:#8A3F17;">⚠ Unmatched answers</div>
+          <div id="unmatched-list" style="max-height:200px;overflow-y:auto;"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head" style="display:flex;align-items:center;justify-content:space-between;">
+          <span id="viewer-title">Answer Sheet</span>
+          <div style="display:flex;gap:6px;" id="page-tabs"></div>
+        </div>
+        <div style="padding:18px;overflow:auto;background:var(--paper);max-height:75vh;">
+          <div id="image-wrap" style="position:relative;display:inline-block;margin:0 auto;">
+            <img id="answer-image" style="display:block;max-width:100%;border-radius:8px;box-shadow:var(--shadow);" />
+          </div>
+          <p id="no-answer-msg" style="display:none;text-align:center;color:var(--ink-soft);padding:96px 0;">No answer found for this question.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+const API_BASE = window.API_BASE || "http://localhost:8000";
+document.getElementById("api-base-label").textContent = API_BASE;
+
+let files = { question: null, answer: null };
+let assessmentId = null;
+let resultData = null;
+let currentQuestionId = null;
+let currentPage = 1;
+
+function wireDropZone(zoneId, inputId, labelId, key) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  const label = document.getElementById(labelId);
+  zone.addEventListener("click", () => input.click());
+  ["dragover", "dragenter"].forEach(evt =>
+    zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.add("drag"); })
+  );
+  ["dragleave", "drop"].forEach(evt =>
+    zone.addEventListener(evt, e => { e.preventDefault(); zone.classList.remove("drag"); })
+  );
+  zone.addEventListener("drop", e => {
+    if (e.dataTransfer.files[0]) setFile(key, e.dataTransfer.files[0], label);
+  });
+  input.addEventListener("change", e => {
+    if (e.target.files[0]) setFile(key, e.target.files[0], label);
+  });
+}
+
+function setFile(key, file, labelEl) {
+  files[key] = file;
+  labelEl.innerHTML = `✓ <span style="color:var(--ink);font-weight:600;">${escapeHtml(file.name)}</span>`;
+  document.getElementById("btn-analyze").disabled = !(files.question && files.answer);
+}
+
+wireDropZone("drop-question", "file-question", "label-question", "question");
+wireDropZone("drop-answer", "file-answer", "label-answer", "answer");
+
+document.getElementById("btn-analyze").addEventListener("click", startAnalysis);
+
+async function startAnalysis() {
+  const errEl = document.getElementById("upload-error");
+  errEl.style.display = "none";
+  try {
+    const fd = new FormData();
+    fd.append("question_paper", files.question);
+    fd.append("answer_sheet", files.answer);
+    const uploadRes = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: fd });
+    if (!uploadRes.ok) throw new Error(`Upload failed (${uploadRes.status})`);
+    const { assessment_id } = await uploadRes.json();
+    assessmentId = assessment_id;
+
+    await fetch(`${API_BASE}/api/process/${assessmentId}`, { method: "POST" });
+
+    showScreen("processing");
+    pollStatus();
+  } catch (e) {
+    errEl.textContent = "⚠ " + e.message + " — check that the backend is running and reachable.";
+    errEl.style.display = "block";
+  }
+}
+
+const STAGE_LABELS = [
+  ["uploaded", "Uploading files"],
+  ["converting_pages", "Converting pages"],
+  ["extracting_questions", "Extracting questions"],
+  ["extracting_answers", "Extracting handwritten answers"],
+  ["mapping", "Mapping answers to questions"],
+  ["completed", "Preparing results"],
+];
+
+function renderStageList(currentStage) {
+  const idx = STAGE_LABELS.findIndex(([k]) => k === currentStage);
+  const list = document.getElementById("stage-list");
+  list.innerHTML = "";
+  STAGE_LABELS.forEach(([key, label], i) => {
+    let cls = "pending", icon = "";
+    if (i < idx || currentStage === "completed") { cls = "done"; icon = "✓"; }
+    else if (i === idx) { cls = "active"; icon = "●"; }
+    list.innerHTML += `<div class="stage-row ${cls}"><span class="stage-icon">${icon}</span><span class="label" style="font-size:13.5px;">${label}</span></div>`;
+  });
+}
+
+async function pollStatus() {
+  try {
+    const res = await fetch(`${API_BASE}/api/status/${assessmentId}`);
+    const data = await res.json();
+    document.getElementById("progress-bar").style.width = `${data.progress}%`;
+    renderStageList(data.stage);
+
+    if (data.stage === "completed") {
+      const resultRes = await fetch(`${API_BASE}/api/result/${assessmentId}`);
+      resultData = await resultRes.json();
+      renderResult();
+      showScreen("result");
+      return;
+    }
+    if (data.stage === "failed") {
+      const el = document.getElementById("process-error");
+      el.textContent = "⚠ " + (data.error || "Something went wrong while processing.");
+      el.style.display = "block";
+      return;
+    }
+    setTimeout(pollStatus, 1500);
+  } catch (e) {
+    setTimeout(pollStatus, 2500);
+  }
+}
+
+function showScreen(name) {
+  ["upload", "processing", "result"].forEach(s => {
+    const el = document.getElementById(`screen-${s}`);
+    el.style.display = s === name ? "" : "none";
+  });
+  document.getElementById(`screen-${name}`).classList.add("screen-enter");
+}
+
+function renderResult() {
+  const s = resultData.summary;
+  document.getElementById("summary-bar").innerHTML = `
+    <span class="summary-pill mono">Total <b>${s.total_questions}</b></span>
+    <span class="summary-pill mono" style="color:var(--ok-green);border-color:#CFE8D9;">✓ Answered <b>${s.answered}</b></span>
+    <span class="summary-pill mono" style="color:var(--ink-soft);">— Unanswered <b>${s.unanswered}</b></span>
+    <span class="summary-pill mono" style="color:#8A3F17;border-color:#F3D9BC;">⚠ Unmatched <b>${s.unmatched}</b></span>
+  `;
+
+  const list = document.getElementById("question-list");
+  list.innerHTML = "";
+  resultData.questions.forEach(q => {
+    let icon = "—", badgeCls = "unanswered";
+    if (q.status === "answered") {
+      icon = q.confidence === "review" ? "⚠" : "✓";
+      badgeCls = q.confidence === "review" ? "review" : "answered";
+    }
+    const row = document.createElement("div");
+    row.className = "q-item";
+    row.dataset.id = q.id;
+    row.innerHTML = `
+      <span class="q-badge ${badgeCls}">${icon}</span>
+      <span>
+        <span class="q-number">Q${q.number}</span>
+        <p class="q-text">${escapeHtml(q.text)}</p>
+      </span>`;
+    row.addEventListener("click", () => selectQuestion(q.id));
+    list.appendChild(row);
+  });
+
+  const unmatchedWrap = document.getElementById("unmatched-wrap");
+  const unmatchedList = document.getElementById("unmatched-list");
+  if (resultData.unmatched_answers.length) {
+    unmatchedWrap.style.display = "";
+    unmatchedList.innerHTML = "";
+    resultData.unmatched_answers.forEach((a, i) => {
+      const row = document.createElement("div");
+      row.className = "q-item";
+      row.innerHTML = `<span class="q-badge review">?</span>
+        <span><span class="q-number">"${escapeHtml(a.question_number || "?")}"</span>
+        <p class="q-text">${escapeHtml(a.text)} · page ${a.page}</p></span>`;
+      row.addEventListener("click", () => selectUnmatched(i));
+      unmatchedList.appendChild(row);
+    });
+  } else {
+    unmatchedWrap.style.display = "none";
+  }
+
+  const firstAnswered = resultData.questions.find(q => q.status === "answered");
+  selectQuestion((firstAnswered || resultData.questions[0])?.id);
+}
+
+function selectQuestion(id) {
+  currentQuestionId = id;
+  document.querySelectorAll(".q-item").forEach(el => el.classList.toggle("active", el.dataset.id === id));
+  const q = resultData.questions.find(q => q.id === id);
+  document.getElementById("viewer-title").textContent = q ? `Answer Sheet — Q${q.number}` : "Answer Sheet";
+
+  if (!q || !q.regions.length) {
+    document.getElementById("image-wrap").style.display = "none";
+    document.getElementById("no-answer-msg").style.display = "block";
+    document.getElementById("page-tabs").innerHTML = "";
+    return;
+  }
+  document.getElementById("image-wrap").style.display = "";
+  document.getElementById("no-answer-msg").style.display = "none";
+
+  renderPageTabs(q.regions.map(r => r.page));
+  showPage(q.regions[0].page, q.regions);
+}
+
+function selectUnmatched(i) {
+  const a = resultData.unmatched_answers[i];
+  currentQuestionId = null;
+  document.querySelectorAll(".q-item").forEach(el => el.classList.remove("active"));
+  document.getElementById("viewer-title").textContent = `Answer Sheet — unmatched ("${a.question_number || "?"}")`;
+  document.getElementById("image-wrap").style.display = "";
+  document.getElementById("no-answer-msg").style.display = "none";
+  renderPageTabs([a.page]);
+  showPage(a.page, [{ page: a.page, bbox: a.bbox }]);
+}
+
+function renderPageTabs(pages) {
+  const uniquePages = [...new Set(pages)];
+  const wrap = document.getElementById("page-tabs");
+  wrap.innerHTML = "";
+  uniquePages.forEach(p => {
+    const btn = document.createElement("button");
+    btn.textContent = `Page ${p}`;
+    btn.className = "page-tab";
+    btn.addEventListener("click", () => {
+      const q = resultData.questions.find(q => q.id === currentQuestionId);
+      const regions = q ? q.regions : resultData.unmatched_answers.map(a => ({ page: a.page, bbox: a.bbox }));
+      showPage(p, regions);
+    });
+    wrap.appendChild(btn);
+  });
+}
+
+function showPage(page, regions) {
+  currentPage = page;
+  const img = document.getElementById("answer-image");
+  img.src = `${API_BASE}/api/page-image/${assessmentId}/answer/${page}`;
+  img.onload = () => drawHighlights(regions.filter(r => r.page === page));
+}
+
+function drawHighlights(regions) {
+  const wrap = document.getElementById("image-wrap");
+  wrap.querySelectorAll(".highlight-box").forEach(el => el.remove());
+  const img = document.getElementById("answer-image");
+  const w = img.clientWidth, h = img.clientHeight;
+
+  regions.forEach(r => {
+    if (!r.bbox) return;
+    const box = document.createElement("div");
+    box.className = "highlight-box";
+    box.style.left = `${r.bbox.x * w}px`;
+    box.style.top = `${r.bbox.y * h}px`;
+    box.style.width = `${r.bbox.width * w}px`;
+    box.style.height = `${r.bbox.height * h}px`;
+    wrap.appendChild(box);
+  });
+
+  if (regions.length) wrap.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str || "";
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>

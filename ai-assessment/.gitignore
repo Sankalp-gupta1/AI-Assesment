@@ -1,0 +1,11 @@
+# Never commit secrets
+backend/.env
+
+# Python
+backend/venv/
+backend/__pycache__/
+backend/data/
+*.pyc
+
+# OS
+.DS_Store
