@@ -1,7 +1,7 @@
 # AI Assessment Analyzer
 
-**Live App:** https://ai-assesment-nine.vercel.app/
-**GitHub Repo:** https://github.com/Sankalp-gupta1/AI-Assesment
+## **Live App:** https://ai-assesment-nine.vercel.app/
+
 
 An AI-powered tool that helps a teacher check a student's answer sheet faster. Upload a question paper and one student's handwritten answer sheet — the app reads both, matches every question to its answer, and shows exactly where on the answer sheet that answer is written, highlighted.
 
